@@ -14,6 +14,7 @@ import {
   CardContent,
   CircularProgress,
 } from "@mui/material";
+import { useNavigate } from "react-router";
 
 type TaskType = "Test" | "Essay" | "Discussion";
 type Tag =
@@ -35,6 +36,7 @@ type Task = {
 const API_URL = "http://localhost:3000/tasks";
 
 const SearchComp = () => {
+  const navigate = useNavigate();
   const [searchText, setSearchText] = useState("");
   const [sortBy, setSortBy] = useState("Newest");
   const [selectedType, setSelectedType] = useState<TaskType | "All">("All");
@@ -233,6 +235,9 @@ const SearchComp = () => {
                       boxShadow: "0 6px 12px rgba(0,0,0,0.1)",
                     },
                   }}
+                  onClick={() =>
+                    navigate("/home", { state: { taskId: task.id } })
+                  }
                 >
                   <CardContent>
                     <Typography variant="h6" fontWeight="bold" gutterBottom>

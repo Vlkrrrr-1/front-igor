@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useLocation } from "react-router-dom";
 
 const TASKS_API = "http://localhost:3000/tasks";
 const RESULTS_API = "http://localhost:3000/tasks/results";
@@ -106,26 +107,16 @@ const HomeComp = () => {
     }
   };
 
+  const location = useLocation();
+  const { taskId } = location.state || {};
+  const needTask = tasks.find((task) => task.id == taskId);
+  console.log(needTask);
+
   return (
     <Box
       sx={{ backgroundColor: "rgb(253, 242, 240)", minHeight: "100vh", p: 4 }}
     >
-      <Typography
-        variant="h4"
-        sx={{ mb: 4, fontWeight: 700, textAlign: "center" }}
-      >
-        {`Hi, ${localStorage.getItem("username")}`}
-      </Typography>
-
-      <Box
-        sx={{
-          maxWidth: "1000px",
-          margin: "0 auto",
-          display: "flex",
-          flexDirection: "column",
-          gap: 4,
-        }}
-      >
+      {needTask ? (
         <Box
           sx={{
             backgroundColor: "#fff",
@@ -134,140 +125,245 @@ const HomeComp = () => {
             boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
           }}
         >
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Оберіть історичну тематику
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            {needTask?.title}
           </Typography>
-          <Select
-            value={theme}
-            onChange={(e) =>
-              setTheme(e.target.value as HistoryTag | "Випадкове")
-            }
-            fullWidth
-            size="small"
-            sx={{ mb: 2 }}
-          >
-            <MenuItem value="Випадкове">Випадкова</MenuItem>
-            <MenuItem value="Первісне суспільство">
-              Первісне суспільство
-            </MenuItem>
-            <MenuItem value="Стародавній Схід">Стародавній Схід</MenuItem>
-            <MenuItem value="Античність">Античність</MenuItem>
-            <MenuItem value="Середньовіччя">Середньовіччя</MenuItem>
-            <MenuItem value="Відродження і Реформація">
-              Відродження і Реформація
-            </MenuItem>
-            <MenuItem value="Новий час">Новий час</MenuItem>
-          </Select>
+          <Typography variant="body2" sx={{ mb: 2 }} color="textSecondary">
+            Тема: {needTask?.tag}
+          </Typography>
 
-          <Typography sx={{ mt: 2 }}>Тип завдання:</Typography>
-          <Select
-            value={taskType}
-            onChange={(e) => setTaskType(e.target.value)}
-            fullWidth
-            size="small"
-            sx={{ mb: 2 }}
-          >
-            <MenuItem value="Essay">Essay</MenuItem>
-            <MenuItem value="Test">Test</MenuItem>
-            <MenuItem value="Discussion">Discussion</MenuItem>
-          </Select>
+          {needTask?.type === "Essay" && (
+            <>
+              <Typography variant="body1" sx={{ mb: 2 }}>
+                {needTask?.content?.question}
+              </Typography>
+              <TextField
+                fullWidth
+                multiline
+                minRows={6}
+                placeholder="Write your answer here..."
+                value={essayAnswer}
+                onChange={(e) => setEssayAnswer(e.target.value)}
+              />
+            </>
+          )}
+
+          {needTask?.type === "Test" &&
+            (() => {
+              const question = needTask?.content?.questions?.[0];
+              return (
+                <>
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {question?.question}
+                  </Typography>
+                  <RadioGroup
+                    value={selectedOption}
+                    onChange={(e) => setSelectedOption(e.target.value)}
+                  >
+                    {question?.options.map((opt: string, i: number) => (
+                      <FormControlLabel
+                        key={i}
+                        value={opt}
+                        control={<Radio />}
+                        label={opt}
+                      />
+                    ))}
+                  </RadioGroup>
+                </>
+              );
+            })()}
+
+          {needTask?.type === "Discussion" && (
+            <>
+              <Typography variant="body1" sx={{ mb: 2 }}>
+                {needTask?.content?.prompt}
+              </Typography>
+              <TextField
+                fullWidth
+                multiline
+                minRows={6}
+                placeholder="Write your answer here..."
+                value={essayAnswer}
+                onChange={(e) => setEssayAnswer(e.target.value)}
+              />
+            </>
+          )}
 
           <Button
+            onClick={handleSubmit}
+            sx={{ mt: 3 }}
             variant="contained"
-            sx={{ mt: 2 }}
-            onClick={handleStart}
             fullWidth
           >
-            Start
+            Submit
           </Button>
         </Box>
+      ) : (
+        <>
+          <Typography
+            variant="h4"
+            sx={{ mb: 4, fontWeight: 700, textAlign: "center" }}
+          >
+            {`Hi, ${localStorage.getItem("username")}`}
+          </Typography>
 
-        {loading ? (
-          <CircularProgress sx={{ margin: "0 auto" }} />
-        ) : showTask && task ? (
           <Box
             sx={{
-              backgroundColor: "#fff",
-              p: 4,
-              borderRadius: 4,
-              boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+              maxWidth: "1000px",
+              margin: "0 auto",
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
             }}
           >
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              {task.title}
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 2 }} color="textSecondary">
-              Тема: {task.tag}
-            </Typography>
+            <Box
+              sx={{
+                backgroundColor: "#fff",
+                p: 4,
+                borderRadius: 4,
+                boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+              }}
+            >
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Оберіть історичну тематику
+              </Typography>
+              <Select
+                value={theme}
+                onChange={(e) =>
+                  setTheme(e.target.value as HistoryTag | "Випадкове")
+                }
+                fullWidth
+                size="small"
+                sx={{ mb: 2 }}
+              >
+                <MenuItem value="Випадкове">Випадкова</MenuItem>
+                <MenuItem value="Первісне суспільство">
+                  Первісне суспільство
+                </MenuItem>
+                <MenuItem value="Стародавній Схід">Стародавній Схід</MenuItem>
+                <MenuItem value="Античність">Античність</MenuItem>
+                <MenuItem value="Середньовіччя">Середньовіччя</MenuItem>
+                <MenuItem value="Відродження і Реформація">
+                  Відродження і Реформація
+                </MenuItem>
+                <MenuItem value="Новий час">Новий час</MenuItem>
+              </Select>
 
-            {task.type === "Essay" && (
-              <>
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                  {task.content?.question}
+              <Typography sx={{ mt: 2 }}>Тип завдання:</Typography>
+              <Select
+                value={taskType}
+                onChange={(e) => setTaskType(e.target.value)}
+                fullWidth
+                size="small"
+                sx={{ mb: 2 }}
+              >
+                <MenuItem value="Essay">Essay</MenuItem>
+                <MenuItem value="Test">Test</MenuItem>
+                <MenuItem value="Discussion">Discussion</MenuItem>
+              </Select>
+
+              <Button
+                variant="contained"
+                sx={{ mt: 2 }}
+                onClick={handleStart}
+                fullWidth
+              >
+                Start
+              </Button>
+            </Box>
+
+            {loading ? (
+              <CircularProgress sx={{ margin: "0 auto" }} />
+            ) : showTask && task ? (
+              <Box
+                sx={{
+                  backgroundColor: "#fff",
+                  p: 4,
+                  borderRadius: 4,
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                }}
+              >
+                <Typography variant="h6" sx={{ mb: 1 }}>
+                  {task.title}
                 </Typography>
-                <TextField
-                  fullWidth
-                  multiline
-                  minRows={6}
-                  placeholder="Write your answer here..."
-                  value={essayAnswer}
-                  onChange={(e) => setEssayAnswer(e.target.value)}
-                />
-              </>
-            )}
+                <Typography
+                  variant="body2"
+                  sx={{ mb: 2 }}
+                  color="textSecondary"
+                >
+                  Тема: {task.tag}
+                </Typography>
 
-            {task.type === "Test" &&
-              (() => {
-                const question = task.content?.questions?.[0];
-                return (
+                {task.type === "Essay" && (
                   <>
                     <Typography variant="body1" sx={{ mb: 2 }}>
-                      {question?.question}
+                      {task.content?.question}
                     </Typography>
-                    <RadioGroup
-                      value={selectedOption}
-                      onChange={(e) => setSelectedOption(e.target.value)}
-                    >
-                      {question?.options.map((opt: string, i: number) => (
-                        <FormControlLabel
-                          key={i}
-                          value={opt}
-                          control={<Radio />}
-                          label={opt}
-                        />
-                      ))}
-                    </RadioGroup>
+                    <TextField
+                      fullWidth
+                      multiline
+                      minRows={6}
+                      placeholder="Write your answer here..."
+                      value={essayAnswer}
+                      onChange={(e) => setEssayAnswer(e.target.value)}
+                    />
                   </>
-                );
-              })()}
+                )}
 
-            {task.type === "Discussion" && (
-              <>
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                  {task.content?.prompt}
-                </Typography>
-                <TextField
+                {task.type === "Test" &&
+                  (() => {
+                    const question = task.content?.questions?.[0];
+                    return (
+                      <>
+                        <Typography variant="body1" sx={{ mb: 2 }}>
+                          {question?.question}
+                        </Typography>
+                        <RadioGroup
+                          value={selectedOption}
+                          onChange={(e) => setSelectedOption(e.target.value)}
+                        >
+                          {question?.options.map((opt: string, i: number) => (
+                            <FormControlLabel
+                              key={i}
+                              value={opt}
+                              control={<Radio />}
+                              label={opt}
+                            />
+                          ))}
+                        </RadioGroup>
+                      </>
+                    );
+                  })()}
+
+                {task.type === "Discussion" && (
+                  <>
+                    <Typography variant="body1" sx={{ mb: 2 }}>
+                      {task.content?.prompt}
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      multiline
+                      minRows={6}
+                      placeholder="Write your answer here..."
+                      value={essayAnswer}
+                      onChange={(e) => setEssayAnswer(e.target.value)}
+                    />
+                  </>
+                )}
+
+                <Button
+                  onClick={handleSubmit}
+                  sx={{ mt: 3 }}
+                  variant="contained"
                   fullWidth
-                  multiline
-                  minRows={6}
-                  placeholder="Write your answer here..."
-                  value={essayAnswer}
-                  onChange={(e) => setEssayAnswer(e.target.value)}
-                />
-              </>
-            )}
-
-            <Button
-              onClick={handleSubmit}
-              sx={{ mt: 3 }}
-              variant="contained"
-              fullWidth
-            >
-              Submit
-            </Button>
+                >
+                  Submit
+                </Button>
+              </Box>
+            ) : null}
           </Box>
-        ) : null}
-      </Box>
+        </>
+      )}
     </Box>
   );
 };
